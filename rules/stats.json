@@ -1,0 +1,92 @@
+{
+  "generated_at": "2026-06-24 14:24:30 CST",
+  "generated_at_unix": 1782282270,
+  "update_schedule": "Daily at 12:00 CST (UTC+8)",
+  "sources": {
+    "dns": "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt",
+    "filters": "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt"
+  },
+  "output_files": {
+    "dns.txt": {
+      "type": "DNS 域名阻断规则",
+      "format": "||domain^",
+      "count": 131010,
+      "size_bytes": 3218155,
+      "target_tools": [
+        "AdGuard Home",
+        "Pi-Hole (需转换)"
+      ]
+    },
+    "cosmetic.txt": {
+      "type": "元素隐藏规则",
+      "format": "## / ### CSS 选择器",
+      "count": 60192,
+      "size_bytes": 3747111,
+      "target_tools": [
+        "AdGuard",
+        "uBlock Origin"
+      ]
+    },
+    "network.txt": {
+      "type": "网络请求过滤规则",
+      "format": "||domain/path, @@ 白名单, $option 修饰",
+      "count": 33169,
+      "size_bytes": 1673550,
+      "target_tools": [
+        "AdGuard",
+        "uBlock Origin"
+      ]
+    }
+  },
+  "classification": {
+    "dns": 131010,
+    "cosmetic": 60769,
+    "network": 33170,
+    "comments": 19,
+    "empty_lines": 0
+  },
+  "deduplication": {
+    "before": 224949,
+    "after": 224371,
+    "removed": 578
+  },
+  "format_validation": {
+    "total_rules": 224949,
+    "valid": 224554,
+    "invalid": 395,
+    "validity_rate": 99.82,
+    "format_distribution": {
+      "dns": 131010,
+      "exception": 10244,
+      "cosmetic_generic": 15443,
+      "script_inject": 4,
+      "modifier": 116,
+      "url_encoded": 6,
+      "query_param": 55,
+      "wildcard_modifier": 37,
+      "generic_url": 6144,
+      "wildcard_url": 119,
+      "url_fragment": 364,
+      "regex": 323,
+      "url_path": 3915,
+      "cosmetic_domain_variant": 11377,
+      "cosmetic_domain": 33949,
+      "attribute": 46,
+      "network_domain": 11402
+    },
+    "invalid_samples": [
+      "18comic.org,18comic.vip,jmcomic1.city,jmcomic1.win,jmcomic1.group#.bot-per-times",
+      "91porny.com/api/getPos?jspath=/",
+      "://*.a-akamaihd.com^",
+      "://*.powvideo.net/*&zoneid=",
+      "://*:*/oklist/vars.js",
+      "://*btbtt.*/imgs.js",
+      "://*btbtt.*/view/image/QT_",
+      "://a.ads.",
+      "://a02342.",
+      "://a869.$~image"
+    ]
+  },
+  "total_rules": 224371,
+  "processing_time_seconds": 1.3
+}

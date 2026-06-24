@@ -1,9 +1,9 @@
 name: Update AdBlock Filters
 
 on:
-  # 每天北京时间凌晨 4:00 (UTC 20:00) 自动运行
+  # 每天北京时间中午 12:00 (UTC 04:00) 自动运行
   schedule:
-    - cron: '0 20 * * *'
+    - cron: '0 4 * * *'
 
   # 支持手动触发
   workflow_dispatch:
@@ -51,7 +51,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add rules/*.txt
+          git add rules/*.txt rules/stats.json
 
           TIMESTAMP=$(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')
           git commit -m "📦 更新规则 - ${TIMESTAMP} CST"
