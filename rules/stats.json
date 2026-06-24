@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-06-24 14:24:30 CST",
-  "generated_at_unix": 1782282270,
+  "generated_at": "2026-06-24 14:58:23 CST",
+  "generated_at_unix": 1782284303,
   "update_schedule": "Daily at 12:00 CST (UTC+8)",
   "sources": {
     "dns": "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt",
@@ -11,7 +11,7 @@
       "type": "DNS 域名阻断规则",
       "format": "||domain^",
       "count": 131010,
-      "size_bytes": 3218155,
+      "size_bytes": 3087132,
       "target_tools": [
         "AdGuard Home",
         "Pi-Hole (需转换)"
@@ -21,7 +21,7 @@
       "type": "元素隐藏规则",
       "format": "## / ### CSS 选择器",
       "count": 60192,
-      "size_bytes": 3747111,
+      "size_bytes": 3686906,
       "target_tools": [
         "AdGuard",
         "uBlock Origin"
@@ -31,7 +31,7 @@
       "type": "网络请求过滤规则",
       "format": "||domain/path, @@ 白名单, $option 修饰",
       "count": 33169,
-      "size_bytes": 1673550,
+      "size_bytes": 1640367,
       "target_tools": [
         "AdGuard",
         "uBlock Origin"
@@ -88,5 +88,5 @@
     ]
   },
   "total_rules": 224371,
-  "processing_time_seconds": 1.3
+  "processing_time_seconds": 0.91
 }
