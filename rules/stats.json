@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-06 14:34:24 CST",
-  "generated_at_unix": 1785998064,
+  "generated_at": "2026-08-07 13:42:31 CST",
+  "generated_at_unix": 1786081351,
   "update_schedule": "Daily at 12:00 CST (UTC+8)",
   "sources": {
     "dns": "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt",
@@ -10,8 +10,8 @@
     "dns.txt": {
       "type": "DNS 域名阻断规则",
       "format": "||domain^",
-      "count": 202242,
-      "size_bytes": 4723948,
+      "count": 201566,
+      "size_bytes": 4711208,
       "target_tools": [
         "AdGuard Home",
         "Pi-Hole (需转换)"
@@ -20,8 +20,8 @@
     "cosmetic.txt": {
       "type": "元素隐藏规则",
       "format": "## / ### CSS 选择器",
-      "count": 67371,
-      "size_bytes": 4098840,
+      "count": 66264,
+      "size_bytes": 4049002,
       "target_tools": [
         "AdGuard",
         "uBlock Origin"
@@ -30,8 +30,8 @@
     "network.txt": {
       "type": "网络请求过滤规则",
       "format": "||domain/path, @@ 白名单, $option 修饰",
-      "count": 38338,
-      "size_bytes": 1844104,
+      "count": 35673,
+      "size_bytes": 1743512,
       "target_tools": [
         "AdGuard",
         "uBlock Origin"
@@ -39,39 +39,39 @@
     }
   },
   "classification": {
-    "dns": 202242,
-    "cosmetic": 67940,
-    "network": 38339,
+    "dns": 201566,
+    "cosmetic": 66832,
+    "network": 35674,
     "comments": 19,
     "empty_lines": 0
   },
   "deduplication": {
-    "before": 308521,
-    "after": 307951,
-    "removed": 570
+    "before": 304072,
+    "after": 303503,
+    "removed": 569
   },
   "format_validation": {
-    "total_rules": 308521,
-    "valid": 308126,
-    "invalid": 395,
+    "total_rules": 304072,
+    "valid": 303679,
+    "invalid": 393,
     "validity_rate": 99.87,
     "format_distribution": {
-      "dns": 202242,
-      "network_domain": 14149,
-      "exception": 11858,
-      "cosmetic_generic": 15469,
+      "dns": 201566,
+      "network_domain": 12850,
+      "exception": 11177,
+      "cosmetic_generic": 15432,
       "script_inject": 4,
       "modifier": 117,
       "url_encoded": 6,
       "query_param": 56,
       "wildcard_modifier": 41,
-      "generic_url": 6903,
+      "generic_url": 6220,
       "wildcard_url": 128,
-      "url_fragment": 376,
-      "regex": 329,
+      "url_fragment": 372,
+      "regex": 333,
       "url_path": 3927,
-      "cosmetic_domain_variant": 13052,
-      "cosmetic_domain": 39419,
+      "cosmetic_domain_variant": 12782,
+      "cosmetic_domain": 38618,
       "attribute": 50
     },
     "invalid_samples": [
@@ -87,6 +87,6 @@
       "://a869.$~image"
     ]
   },
-  "total_rules": 307951,
-  "processing_time_seconds": 1.06
+  "total_rules": 303503,
+  "processing_time_seconds": 1.05
 }
