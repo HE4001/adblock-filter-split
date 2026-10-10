@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-09 19:11:34 CST",
-  "generated_at_unix": 1791544294,
+  "generated_at": "2026-10-10 18:28:47 CST",
+  "generated_at_unix": 1791628127,
   "update_schedule": "Daily at 12:00 CST (UTC+8)",
   "sources": {
     "dns": "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt",
@@ -10,8 +10,8 @@
     "dns.txt": {
       "type": "DNS 域名阻断规则",
       "format": "||domain^",
-      "count": 226164,
-      "size_bytes": 5381762,
+      "count": 229599,
+      "size_bytes": 5470225,
       "target_tools": [
         "AdGuard Home",
         "Pi-Hole (需转换)"
@@ -20,8 +20,8 @@
     "cosmetic.txt": {
       "type": "元素隐藏规则",
       "format": "## / ### CSS 选择器",
-      "count": 66870,
-      "size_bytes": 4204526,
+      "count": 67607,
+      "size_bytes": 4228749,
       "target_tools": [
         "AdGuard",
         "uBlock Origin"
@@ -30,8 +30,8 @@
     "network.txt": {
       "type": "网络请求过滤规则",
       "format": "||domain/path, @@ 白名单, $option 修饰",
-      "count": 35680,
-      "size_bytes": 1780687,
+      "count": 37778,
+      "size_bytes": 1869548,
       "target_tools": [
         "AdGuard",
         "uBlock Origin"
@@ -39,39 +39,39 @@
     }
   },
   "classification": {
-    "dns": 226164,
-    "cosmetic": 67438,
-    "network": 35681,
+    "dns": 229599,
+    "cosmetic": 68174,
+    "network": 37779,
     "comments": 19,
     "empty_lines": 0
   },
   "deduplication": {
-    "before": 329283,
-    "after": 328714,
-    "removed": 569
+    "before": 335552,
+    "after": 334984,
+    "removed": 568
   },
   "format_validation": {
-    "total_rules": 329283,
-    "valid": 328889,
-    "invalid": 394,
+    "total_rules": 335552,
+    "valid": 335160,
+    "invalid": 392,
     "validity_rate": 99.88,
     "format_distribution": {
-      "dns": 226164,
-      "network_domain": 12909,
-      "exception": 11321,
-      "cosmetic_generic": 15386,
+      "dns": 229599,
+      "network_domain": 13939,
+      "exception": 11967,
+      "cosmetic_generic": 15380,
       "script_inject": 4,
-      "modifier": 122,
+      "modifier": 121,
       "url_encoded": 6,
       "query_param": 56,
       "wildcard_modifier": 44,
-      "generic_url": 5993,
-      "wildcard_url": 129,
-      "url_fragment": 368,
-      "regex": 354,
-      "url_path": 3933,
-      "cosmetic_domain_variant": 12995,
-      "cosmetic_domain": 39057,
+      "generic_url": 6435,
+      "wildcard_url": 128,
+      "url_fragment": 370,
+      "regex": 355,
+      "url_path": 3914,
+      "cosmetic_domain_variant": 13219,
+      "cosmetic_domain": 39575,
       "attribute": 48
     },
     "invalid_samples": [
@@ -79,14 +79,14 @@
       "91porny.com/api/getPos?jspath=/",
       "://*.a-akamaihd.com^",
       "://*.powvideo.net/*&zoneid=",
-      "://*:*/oklist/vars.js",
       "://*btbtt.*/imgs.js",
       "://*btbtt.*/view/image/QT_",
       "://a.ads.",
       "://a02342.",
-      "://a869.$~image"
+      "://a869.$~image",
+      "://ad-api-"
     ]
   },
-  "total_rules": 328714,
-  "processing_time_seconds": 2.13
+  "total_rules": 334984,
+  "processing_time_seconds": 1.37
 }
