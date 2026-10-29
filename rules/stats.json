@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-28 18:25:38 CST",
-  "generated_at_unix": 1793183138,
+  "generated_at": "2026-10-29 18:45:57 CST",
+  "generated_at_unix": 1793270757,
   "update_schedule": "Daily at 12:00 CST (UTC+8)",
   "sources": {
     "dns": "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt",
@@ -10,8 +10,8 @@
     "dns.txt": {
       "type": "DNS 域名阻断规则",
       "format": "||domain^",
-      "count": 241456,
-      "size_bytes": 5793234,
+      "count": 242180,
+      "size_bytes": 5808868,
       "target_tools": [
         "AdGuard Home",
         "Pi-Hole (需转换)"
@@ -20,8 +20,8 @@
     "cosmetic.txt": {
       "type": "元素隐藏规则",
       "format": "## / ### CSS 选择器",
-      "count": 66641,
-      "size_bytes": 4206537,
+      "count": 66659,
+      "size_bytes": 4207303,
       "target_tools": [
         "AdGuard",
         "uBlock Origin"
@@ -30,8 +30,8 @@
     "network.txt": {
       "type": "网络请求过滤规则",
       "format": "||domain/path, @@ 白名单, $option 修饰",
-      "count": 35266,
-      "size_bytes": 1772787,
+      "count": 35276,
+      "size_bytes": 1773648,
       "target_tools": [
         "AdGuard",
         "uBlock Origin"
@@ -39,39 +39,39 @@
     }
   },
   "classification": {
-    "dns": 241456,
-    "cosmetic": 67209,
-    "network": 35267,
+    "dns": 242180,
+    "cosmetic": 67227,
+    "network": 35277,
     "comments": 19,
     "empty_lines": 0
   },
   "deduplication": {
-    "before": 343932,
-    "after": 343363,
+    "before": 344684,
+    "after": 344115,
     "removed": 569
   },
   "format_validation": {
-    "total_rules": 343932,
-    "valid": 343560,
+    "total_rules": 344684,
+    "valid": 344312,
     "invalid": 372,
     "validity_rate": 99.89,
     "format_distribution": {
-      "dns": 241456,
+      "dns": 242180,
       "network_domain": 12685,
-      "exception": 11318,
+      "exception": 11320,
       "cosmetic_generic": 15196,
       "script_inject": 4,
       "modifier": 121,
       "url_encoded": 6,
       "query_param": 56,
       "wildcard_modifier": 45,
-      "generic_url": 5949,
+      "generic_url": 5953,
       "wildcard_url": 128,
       "url_fragment": 329,
-      "regex": 356,
-      "url_path": 3850,
-      "cosmetic_domain_variant": 13025,
-      "cosmetic_domain": 38988,
+      "regex": 361,
+      "url_path": 3849,
+      "cosmetic_domain_variant": 13026,
+      "cosmetic_domain": 39005,
       "attribute": 48
     },
     "invalid_samples": [
@@ -87,6 +87,6 @@
       "://ad-api-"
     ]
   },
-  "total_rules": 343363,
-  "processing_time_seconds": 1.69
+  "total_rules": 344115,
+  "processing_time_seconds": 1.72
 }
