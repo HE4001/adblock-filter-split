@@ -19,11 +19,8 @@
 
 | 指标 | 数值 |
 |------|------|
-| 📊 总规则数 | ~224,000+ 条 |
-| 🛡️ DNS 阻断规则 | ~130,000 条 (`rules/dns.txt`) |
-| 🎨 元素隐藏规则 | ~15,000 条 (`rules/cosmetic.txt`) |
-| 🌐 网络过滤规则 | ~79,000 条 (`rules/network.txt`) |
-| ✅ 格式有效率 | ~99.9%+ |
+| 📊 总规则数及分类数量 | 以 [`rules/stats.json`](rules/stats.json) 为准 |
+| ✅ 格式识别率 | 见 `format_validation.validity_rate` |
 | 🔄 更新频率 | 每天 12:00 CST (UTC+8) |
 
 > 具体数值每次更新自动变化，查看 [`rules/stats.json`](rules/stats.json) 获取最新统计。
@@ -87,29 +84,43 @@ URL 路径过滤、第三方请求拦截、白名单等高级规则。
 
 未知格式的规则会记录在日志和 `stats.json` 中，便于排查问题。
 
+这里的校验是已知格式识别，不是 AdGuard / uBlock Origin 的完整语法解析；未知规则仍保留在 `network.txt`，避免因识别范围不足而丢失规则。列表头（如 `[Adblock Plus 2.0]`）、注释和 UTF-8 BOM 不会混入规则内容。
+
+去重保留首次出现的顺序：纯 DNS 域名规则忽略大小写；其他规则仅去除完全相同的行，保留 CSS 选择器、脚本参数、正则和 `$match-case` 规则中的大小写差异。
+
 ## 自动更新
 
 GitHub Actions 工作流每天 **北京时间中午 12:00** 自动运行：
-1. 下载上游最新规则
+1. 运行离线回归测试，并行下载两个上游规则文件
 2. 解析、分类、格式校验
 3. 去重
 4. 输出 3 个规则文件 + 统计摘要
-5. 自动提交并推送
+5. 自动提交并推送（包含新生成的文件）
+
+下载失败、空响应、HTML 错误页、无可识别规则的响应或 UTF-8 解码失败时会终止，不覆盖现有输出。HTTP 408、429、5xx 和网络错误会重试，其他 HTTP 错误立即报告。所有输出先写入临时文件，再逐文件原子替换；多个文件之间的替换不构成事务。输出统一为 UTF-8 / LF，并共享本轮生成时间。
+
+12:00 是计划触发时间，实际执行可能受 GitHub Actions 调度延迟影响。
 
 也可以手动触发：**Actions** → **Update AdBlock Filters** → **Run workflow**。
 
 ## 本地运行
 
 ```bash
-# 确保已安装 Python 3.9+
+# 确保已安装 Python 3.10+
 python scripts/process_filters.py
+
+# 写入其他目录，便于检查结果
+python scripts/process_filters.py --output-dir ./preview-rules
+
+# 运行测试（标准库，无需联网或安装依赖）
+python -m unittest discover -s tests -v
 ```
 
 输出文件在 `rules/` 目录下，包括 `stats.json` 统计摘要。
 
 ## 为什么拆分？
 
-上游文件条目数过多（合计超过 22 万条），部分工具可能因性能或限制无法正常加载。按规则类型拆分后：
+上游文件包含数十万条规则，部分工具可能因性能或限制无法正常加载。按规则类型拆分后：
 
 1. **DNS 阻断规则** — 专用于 DNS 级拦截工具（AdGuard Home），不需要加载元素隐藏规则
 2. **元素隐藏规则** — 用于浏览器扩展，按需订阅
@@ -118,3 +129,4 @@ python scripts/process_filters.py
 ## 许可
 
 上游规则版权归 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 及其各规则源作者所有。本项目仅做自动化重组分发。
+
