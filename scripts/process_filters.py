@@ -11,20 +11,27 @@ AdBlock 规则下载、分类、去重、校验、输出脚本。
 纯标准库实现，零外部依赖，适用于 GitHub Actions 环境。
 """
 
+import argparse
 import json
 import os
 import re
 import sys
 import time
 import logging
+from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
+from http.client import IncompleteRead
+from itertools import chain
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 from urllib.request import urlopen, Request
 from urllib.error import URLError, HTTPError
 
 # 强制 UTF-8 输出 (Windows 兼容)
-if sys.stdout.encoding != "utf-8":
+if hasattr(sys.stdout, "reconfigure") and sys.stdout.encoding != "utf-8":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-if sys.stderr.encoding != "utf-8":
+if hasattr(sys.stderr, "reconfigure") and sys.stderr.encoding != "utf-8":
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 # ---------------------------------------------------------------------------
@@ -62,10 +69,18 @@ def download(url: str, description: str) -> str:
             log.info("下载 %s (尝试 %d/%d)...", description, attempt, MAX_RETRIES)
             req = Request(url, headers={"User-Agent": "AdBlockFilterSplit/1.0"})
             with urlopen(req, timeout=TIMEOUT) as resp:
-                content = resp.read().decode("utf-8", errors="replace")
-            log.info("下载 %s 成功, 大小: %d 字节", description, len(content))
+                payload = resp.read()
+                content = payload.decode("utf-8-sig")
+            validate_source(content, description)
+            log.info("下载 %s 成功, 大小: %d 字节", description, len(payload))
             return content
-        except (URLError, HTTPError, OSError) as e:
+        except HTTPError as e:
+            if e.code not in (408, 429) and not 500 <= e.code < 600:
+                raise RuntimeError(f"下载 {description} 失败: HTTP {e.code}") from e
+            log.warning("下载 %s 失败 (尝试 %d/%d): %s", description, attempt, MAX_RETRIES, e)
+            if attempt < MAX_RETRIES:
+                time.sleep(RETRY_DELAY)
+        except (URLError, OSError, IncompleteRead, UnicodeError, ValueError) as e:
             log.warning("下载 %s 失败 (尝试 %d/%d): %s", description, attempt, MAX_RETRIES, e)
             if attempt < MAX_RETRIES:
                 time.sleep(RETRY_DELAY)
@@ -162,6 +177,39 @@ RE_URL_FRAGMENT = re.compile(r'^\.')
 
 # URL 路径匹配: /path, //domain/path 等 (不以 || 开头的路径子串匹配)
 RE_URL_PATH = re.compile(r'^/')
+
+# 过滤列表头是元数据，不能当作属性选择器输出。
+RE_LIST_HEADER = re.compile(r'^\[Adblock(?: Plus)?(?: [\d.]+)?\]$', re.IGNORECASE)
+
+
+def is_metadata(line: str) -> bool:
+    """识别注释和列表头；保留 ##、#@# 等实际过滤规则。"""
+    return (line.startswith(("!", "# ")) or line == "#"
+            or (line.startswith("[") and bool(RE_LIST_HEADER.fullmatch(line))))
+
+
+def iter_lines(content: str) -> Iterable[str]:
+    """按 LF / CRLF 逐行切片，不创建完整列表或 StringIO 的 Unicode 副本。"""
+    start = 0
+    while start < len(content):
+        end = content.find("\n", start)
+        if end < 0:
+            yield content[start:]
+            return
+        yield content[start:end]
+        start = end + 1
+
+
+def validate_source(content: str, description: str) -> None:
+    """拒绝空文件、HTML 错误页和完全无法识别的响应，避免覆盖现有订阅。"""
+    prefix = content.lstrip()[:256].lower()
+    if not prefix or prefix.startswith(("<!doctype html", "<html")):
+        raise ValueError(f"{description} 不是有效的过滤列表")
+    for raw in iter_lines(content):
+        line = raw.strip().lstrip("\ufeff")
+        if line and not is_metadata(line) and is_valid_rule(line)[0]:
+            return
+    raise ValueError(f"{description} 不含可识别的过滤规则")
 
 
 # ---------------------------------------------------------------------------
@@ -271,7 +319,7 @@ def is_valid_rule(line: str) -> tuple[bool, str]:
 # 规则分类
 # ---------------------------------------------------------------------------
 
-def classify_rules(lines: list[str]) -> tuple[dict, dict, dict]:
+def classify_rules(lines: Iterable[str]) -> tuple[dict, dict, dict]:
     """将规则行按类型分类，同时进行格式校验。
 
     Returns:
@@ -288,7 +336,7 @@ def classify_rules(lines: list[str]) -> tuple[dict, dict, dict]:
     }
 
     for line in lines:
-        stripped = line.strip()
+        stripped = line.strip().lstrip("\ufeff")
 
         # 空行跳过
         if not stripped:
@@ -296,7 +344,7 @@ def classify_rules(lines: list[str]) -> tuple[dict, dict, dict]:
             continue
 
         # 注释行跳过
-        if stripped.startswith("!"):
+        if is_metadata(stripped):
             stats["comment"] += 1
             continue
 
@@ -316,23 +364,14 @@ def classify_rules(lines: list[str]) -> tuple[dict, dict, dict]:
                 validation["invalid_samples"].append(sample)
 
         # 分类
-        if RE_DNS.match(stripped):
-            categories["dns"].append(stripped)
-            stats["dns"] += 1
-        elif (RE_COSMETIC_GENERIC.match(stripped) or RE_COSMETIC_DOMAIN.match(stripped)
-              or RE_COSMETIC_VARIANT.match(stripped) or RE_COSMETIC_DOMAIN_VARIANT.match(stripped)):
-            categories["cosmetic"].append(stripped)
-            stats["cosmetic"] += 1
-        elif RE_EXCEPTION.match(stripped):
-            categories["network"].append(stripped)
-            stats["network"] += 1
-        elif RE_NETWORK_DOMAIN.match(stripped):
-            categories["network"].append(stripped)
-            stats["network"] += 1
+        if fmt == "dns":
+            category = "dns"
+        elif fmt.startswith("cosmetic_"):
+            category = "cosmetic"
         else:
-            # 其他类型 (正则、hosts、IP、属性选择器等) → 网络规则
-            categories["network"].append(stripped)
-            stats["network"] += 1
+            category = "network"
+        categories[category].append(stripped)
+        stats[category] += 1
 
     return categories, stats, validation
 
@@ -341,13 +380,13 @@ def classify_rules(lines: list[str]) -> tuple[dict, dict, dict]:
 # 去重
 # ---------------------------------------------------------------------------
 
-def deduplicate(rules: list[str]) -> list[str]:
-    """去重，保留首次出现的顺序。"""
+def deduplicate(rules: Iterable[str], *, case_insensitive: bool = False) -> list[str]:
+    """保留首次出现的顺序；仅纯 DNS 域名规则允许忽略大小写。"""
     seen = set()
     result = []
     for rule in rules:
-        # 用 lowercase 去重（adblock 规则不区分大小写）
-        key = rule.lower()
+        # CSS、脚本参数、正则及 $match-case 规则可能区分大小写。
+        key = rule.lower() if case_insensitive else rule
         if key not in seen:
             seen.add(key)
             result.append(rule)
@@ -364,7 +403,7 @@ def build_output(
     description: str,
     source_urls: list[str],
     rule_type: str,
-    validation: dict | None = None,
+    generated_at: datetime | None = None,
 ) -> str:
     """构建输出文件内容（含元数据头部）。
 
@@ -374,10 +413,11 @@ def build_output(
         description: 文件描述
         source_urls: 上游源文件 URL 列表
         rule_type: 规则类型标签
-        validation: 格式校验统计 (可选)
+        generated_at: 本轮生成时间 (可选)
     """
-    now = datetime.now(CST).strftime("%Y%m%d%H%M%S")
-    now_human = datetime.now(CST).strftime("%Y/%m/%d %H:%M:%S")
+    generated_at = generated_at or datetime.now(CST)
+    now = generated_at.strftime("%Y%m%d%H%M%S")
+    now_human = generated_at.strftime("%Y/%m/%d %H:%M:%S")
 
     header = f"""!
 ! Title: {title}
@@ -408,11 +448,13 @@ def generate_stats(
     validation: dict,
     dedup_stats: dict,
     elapsed: float,
+    generated_at: datetime | None = None,
 ) -> dict:
     """生成统计摘要 JSON。"""
+    generated_at = generated_at or datetime.now(CST)
     return {
-        "generated_at": datetime.now(CST).strftime("%Y-%m-%d %H:%M:%S CST"),
-        "generated_at_unix": int(time.time()),
+        "generated_at": generated_at.strftime("%Y-%m-%d %H:%M:%S CST"),
+        "generated_at_unix": int(generated_at.timestamp()),
         "update_schedule": "Daily at 12:00 CST (UTC+8)",
         "sources": {
             "dns": URL_DNS,
@@ -472,21 +514,46 @@ def generate_stats(
 # 主流程
 # ---------------------------------------------------------------------------
 
-def main():
+def write_outputs(output_dir: Path, outputs: dict[str, str]) -> None:
+    """先暂存所有 UTF-8/LF 文件，再逐文件原子替换，避免写出半个文件。"""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    staged = []
+    try:
+        for filename, content in outputs.items():
+            with NamedTemporaryFile(mode="w", encoding="utf-8", newline="\n",
+                                    dir=output_dir, suffix=".tmp", delete=False) as f:
+                staged.append((Path(f.name), output_dir / filename))
+                f.write(content)
+        for temporary, destination in staged:
+            os.replace(temporary, destination)
+    finally:
+        for temporary, _ in staged:
+            temporary.unlink(missing_ok=True)
+
+
+def main(argv: list[str] | None = None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-dir", type=Path, default=Path(OUTPUT_DIR),
+                        help="输出目录，默认使用项目内的 rules/")
+    args = parser.parse_args(argv)
     log.info("=== AdBlock 规则处理脚本启动 ===")
-    start_time = time.time()
+    start_time = time.perf_counter()
+    generated_at = datetime.now(CST)
 
     # 1. 下载源文件
     log.info("步骤 1/5: 下载源文件")
-    dns_content = download(URL_DNS, "adblockdns.txt (DNS 规则)")
-    filter_content = download(URL_FILTERS, "adblockfilters.txt (过滤规则)")
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        dns_future = executor.submit(download, URL_DNS, "adblockdns.txt (DNS 规则)")
+        filter_future = executor.submit(download, URL_FILTERS, "adblockfilters.txt (过滤规则)")
+        dns_content = dns_future.result()
+        filter_content = filter_future.result()
 
     # 2. 合并、分类、格式校验
     log.info("步骤 2/5: 解析、分类并校验格式")
-    all_lines = dns_content.splitlines() + filter_content.splitlines()
-    log.info("总计 %d 行待处理", len(all_lines))
-
-    categories, stats, validation = classify_rules(all_lines)
+    # 按行迭代两个来源，避免 splitlines 和列表拼接产生整份规则的中间副本。
+    categories, stats, validation = classify_rules(chain(iter_lines(dns_content), iter_lines(filter_content)))
+    if not validation["valid"]:
+        raise RuntimeError("源文件不含可识别的规则，保留现有输出")
     log.info(
         "分类结果: DNS=%d, Cosmetic=%d, Network=%d (注释=%d, 空行=%d)",
         stats["dns"], stats["cosmetic"], stats["network"],
@@ -516,7 +583,7 @@ def main():
     for key in categories:
         before = len(categories[key])
         dedup_stats["before"] += before
-        categories[key] = deduplicate(categories[key])
+        categories[key] = deduplicate(categories[key], case_insensitive=(key == "dns"))
         after = len(categories[key])
         dedup_stats["after"] += after
         dedup_stats["removed"] += before - after
@@ -525,7 +592,6 @@ def main():
 
     # 4. 写入输出文件
     log.info("步骤 4/5: 写入规则文件")
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     output_configs = [
         (
@@ -555,27 +621,25 @@ def main():
     ]
 
     file_sizes = {}
+    outputs = {}
     for filename, rules, title, desc, sources, rtype in output_configs:
-        output_path = os.path.join(OUTPUT_DIR, filename)
-        content = build_output(rules, title, desc, sources, rtype)
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write(content)
-        file_sizes[filename] = os.path.getsize(output_path)
+        content = build_output(rules, title, desc, sources, rtype, generated_at)
+        outputs[filename] = content
+        file_sizes[filename] = len(content.encode("utf-8"))
         log.info("  %s: %d 条规则, 文件大小 %d 字节", filename, len(rules), file_sizes[filename])
 
     # 5. 生成统计摘要
     log.info("步骤 5/5: 生成统计摘要")
-    elapsed = time.time() - start_time
-    stats_data = generate_stats(categories, stats, validation, dedup_stats, elapsed)
+    elapsed = time.perf_counter() - start_time
+    stats_data = generate_stats(categories, stats, validation, dedup_stats, elapsed, generated_at)
 
     # 填充实际文件大小
     for fname in stats_data["output_files"]:
         if fname in file_sizes:
             stats_data["output_files"][fname]["size_bytes"] = file_sizes[fname]
 
-    stats_path = os.path.join(OUTPUT_DIR, "stats.json")
-    with open(stats_path, "w", encoding="utf-8") as f:
-        json.dump(stats_data, f, ensure_ascii=False, indent=2)
+    outputs["stats.json"] = json.dumps(stats_data, ensure_ascii=False, indent=2) + "\n"
+    write_outputs(args.output_dir, outputs)
 
     log.info("=== 处理完成, 耗时 %.1f 秒 ===", elapsed)
 
@@ -611,3 +675,4 @@ if __name__ == "__main__":
     except Exception as e:
         log.error("脚本执行失败: %s", e, exc_info=True)
         sys.exit(1)
+

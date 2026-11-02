@@ -16,6 +16,7 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     permissions:
       contents: write  # 需要写权限来 push 变更
@@ -31,13 +32,17 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: 运行回归测试
+        run: python -m unittest discover -s tests -v
+
       - name: 运行处理脚本
         run: python scripts/process_filters.py
 
       - name: 检查文件变更
         id: diff
         run: |
-          if git diff --quiet rules/; then
+          git add rules/*.txt rules/stats.json
+          if git diff --cached --quiet -- rules/; then
             echo "changed=false" >> $GITHUB_OUTPUT
             echo "规则文件无变化，跳过提交。"
           else
@@ -57,3 +62,4 @@ jobs:
           git commit -m "📦 更新规则 - ${TIMESTAMP} CST"
 
           git push
+
