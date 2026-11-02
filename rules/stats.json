@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-01 19:07:09 CST",
-  "generated_at_unix": 1793531229,
+  "generated_at": "2026-11-02 20:07:00 CST",
+  "generated_at_unix": 1793621220,
   "update_schedule": "Daily at 12:00 CST (UTC+8)",
   "sources": {
     "dns": "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt",
@@ -20,8 +20,8 @@
     "cosmetic.txt": {
       "type": "元素隐藏规则",
       "format": "## / ### CSS 选择器",
-      "count": 66659,
-      "size_bytes": 4207303,
+      "count": 67227,
+      "size_bytes": 4219145,
       "target_tools": [
         "AdGuard",
         "uBlock Origin"
@@ -30,8 +30,8 @@
     "network.txt": {
       "type": "网络请求过滤规则",
       "format": "||domain/path, @@ 白名单, $option 修饰",
-      "count": 35276,
-      "size_bytes": 1773648,
+      "count": 35277,
+      "size_bytes": 1773689,
       "target_tools": [
         "AdGuard",
         "uBlock Origin"
@@ -47,8 +47,8 @@
   },
   "deduplication": {
     "before": 344684,
-    "after": 344115,
-    "removed": 569
+    "after": 344684,
+    "removed": 0
   },
   "format_validation": {
     "total_rules": 344684,
@@ -87,6 +87,6 @@
       "://ad-api-"
     ]
   },
-  "total_rules": 344115,
-  "processing_time_seconds": 1.14
+  "total_rules": 344684,
+  "processing_time_seconds": 1.03
 }
