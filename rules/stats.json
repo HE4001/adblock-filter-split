@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-08 19:07:38 CST",
-  "generated_at_unix": 1794136058,
+  "generated_at": "2026-11-09 20:38:47 CST",
+  "generated_at_unix": 1794227927,
   "update_schedule": "Daily at 12:00 CST (UTC+8)",
   "sources": {
     "dns": "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt",
@@ -88,5 +88,5 @@
     ]
   },
   "total_rules": 344684,
-  "processing_time_seconds": 0.93
+  "processing_time_seconds": 0.97
 }
